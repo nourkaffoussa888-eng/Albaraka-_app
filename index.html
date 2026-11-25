@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0f24">
+    <title>البركة Pro - تطبيق الهاتف</title>
+    <style>
+        :root {
+            --bg-main: #0a0f24; --bg-card: #121833; --border-soft: rgba(255,255,255,0.08);
+            --text-main: #ffffff; --text-desc: #8fa0dd;
+            --blue: #38bdf8; --green: #10b981; --red: #f43f5e; --orange: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: var(--bg-main); color: var(--text-main); padding-bottom: 75px; }
+        #mobile-lock {
+            position: fixed; inset: 0; background: var(--bg-main); z-index: 9999;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .lock-box {
+            background: var(--bg-card); padding: 26px 20px; border-radius: 16px;
+            border: 1px solid var(--blue); width: 100%; max-width: 370px; text-align: center;
+        }
+        input {
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-soft);
+            background: #1a2247; color: #fff; font-size: 15px; margin-bottom: 12px; outline: none;
+        }
+        button.primary-btn {
+            width: 100%; padding: 13px; border-radius: 10px; border: none;
+            background: var(--blue); color: #040814; font-weight: 800; font-size: 15px; cursor: pointer;
+        }
+        header {
+            background: #090d1a; padding: 14px 16px; border-bottom: 1px solid var(--border-soft);
+            display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+        }
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .card { background: var(--bg-card); padding: 14px; border-radius: 14px; border: 1px solid var(--border-soft); }
+        .card.full { grid-column: 1 / -1; }
+        .kpi-label { font-size: 11px; color: var(--text-desc); display: block; margin-bottom: 4px; }
+        .kpi-val { font-size: 17px; font-weight: 800; }
+        .progress-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: var(--green); }
+        .list-item { background: var(--bg-card); padding: 12px; border-radius: 12px; border: 1px solid var(--border-soft); margin-bottom: 10px; font-size: 13px; }
+        nav.bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 64px; background: #090d1a;
+            border-top: 1px solid var(--border-soft); display: flex; justify-content: space-around; align-items: center; z-index: 999;
+        }
+        .nav-btn { background: none; border: none; color: var(--text-desc); display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; cursor: pointer; }
+        .nav-btn.active { color: var(--blue); font-weight: bold; }
+        .tab-view { display: none; }
+        .tab-view.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="mobile-lock">
+        <div class="lock-box">
+            <div style="font-size:40px;margin-bottom:8px;">🌳</div>
+            <h2 style="margin-bottom:6px;">البركة Pro Mobile</h2>
+            <p style="font-size:12px;color:var(--text-desc);margin-bottom:16px;">متابعة حية للمعصرة من الهاتف</p>
+            <input type="text" id="mob-url-input" value="https://firebasedatabase.app" style="direction:ltr;font-size:11px;">
+            <input type="password" id="mob-pin-input" placeholder="الرمز السري (1234)" value="1234" style="text-align:center;letter-spacing:4px;">
+            <button class="primary-btn" id="btn-connect" onclick="connectMobileApp()">🚀 دخول ومزامنة البيانات</button>
+            <p id="mob-err" style="color:var(--red);font-size:12px;margin-top:12px;line-height:1.5;"></p>
+        </div>
+    </div>
+
+    <header>
+        <div>
+            <h3 id="m-mill-name" style="font-size:15px;">🌳 معصرة البركة Pro</h3>
+            <span id="m-last-sync" style="font-size:10px;color:var(--green);">متصل حياً</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+            <button onclick="fetchLiveCloudData()" style="background:rgba(56,189,248,0.15);border:1px solid var(--blue);color:var(--blue);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:bold;">🔄 تحديث</button>
+            <button onclick="resetMobileConfig()" style="background:rgba(244,63,94,0.15);border:1px solid var(--red);color:var(--red);padding:6px 10px;border-radius:8px;font-size:12px;">🔒</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="view-kpis" class="tab-view active">
+            <div class="kpi-grid">
+                <div class="card full" style="border-right:4px solid var(--blue);">
+                    <span class="kpi-label">💰 رصيد الخزينة الكلي الصافي</span>
+                    <div class="kpi-val" style="font-size:22px;color:var(--blue);"><span id="m-cash">0.000</span> د.ت</div>
+                </div>
+                <div class="card" style="border-right:3px solid var(--green);"><span class="kpi-label">📈 مداخيل اليوم</span><div class="kpi-val" style="color:var(--green);"><span id="m-in">0.000</span> د.ت</div></div>
+                <div class="card" style="border-right:3px solid var(--red);"><span class="kpi-label">📉 مصاريف اليوم</span><div class="kpi-val" style="color:var(--red);"><span id="m-out">0.000</span> د.ت</div></div>
+                <div class="card"><span class="kpi-label">🚜 الزيتون المطحون</span><div class="kpi-val"><span id="m-olives">0.00</span> كلغ</div></div>
+                <div class="card"><span class="kpi-label">🛢️ الزيت المنتج</span><div class="kpi-val" style="color:var(--blue);"><span id="m-oil">0.00</span> لتر</div></div>
+                <div class="card"><span class="kpi-label">🌾 زيت العُشر</span><div class="kpi-val" style="color:var(--orange);"><span id="m-tithe">0.00</span> لتر</div></div>
+                <div class="card"><span class="kpi-label">🏢 مخزون المعصرة</span><div class="kpi-val" style="color:var(--green);"><span id="m-stock">0.00</span> لتر</div></div>
+            </div>
+        </div>
+
+        <div id="view-tanks" class="tab-view">
+            <h4 style="margin-bottom:12px;color:var(--orange);">🛢️ مراقبة امتلاء الخزانات</h4>
+            <div id="m-tanks-list"></div>
+        </div>
+
+        <div id="view-pressing" class="tab-view">
+            <h4 style="margin-bottom:12px;color:var(--blue);">⚙️ آخر عمليات العصر</h4>
+            <div id="m-pressing-list"></div>
+        </div>
+
+        <div id="view-charts" class="tab-view">
+            <div class="card" style="margin-bottom:14px;">
+                <h4 style="color:var(--green);margin-bottom:10px;font-size:13px;">📉 تطور معدل القلبة (آخر 10 أيام)</h4>
+                <div id="m-chart-kalba" style="height:150px;"></div>
+            </div>
+            <div class="card">
+                <h4 style="color:var(--blue);margin-bottom:10px;font-size:13px;">🛢️ الإنتاج اليومي (زيتون مقابل زيت)</h4>
+                <div id="m-chart-prod" style="height:150px;"></div>
+            </div>
+        </div>
+
+        <div id="view-finance" class="tab-view">
+            <h4 style="color:var(--orange);margin-bottom:10px;">🛒 آخر عقود شراء الزيت</h4>
+            <div id="m-buying-list" style="margin-bottom:18px;"></div>
+            <h4 style="color:var(--red);margin-bottom:10px;">💸 سجل المصاريف والإيداعات</h4>
+            <div id="m-expenses-list"></div>
+        </div>
+
+        <div id="view-farmer" class="tab-view">
+            <div class="card" style="margin-bottom:14px;">
+                <h4 style="color:var(--blue);margin-bottom:8px;font-size:14px;">🔎 بحث شامل عن ملف فلاح</h4>
+                <input type="text" id="m-farmer-search-input" oninput="searchFarmerOnMobile()" placeholder="اكتب اسم الفلاح هنا..." style="margin-bottom:0;">
+            </div>
+            <div id="m-farmer-summary" class="kpi-grid" style="display:none;">
+                <div class="card"><span class="kpi-label">🚜 الزيتون المعصور</span><div class="kpi-val"><span id="mf-olive">0</span> كغ</div></div>
+                <div class="card"><span class="kpi-label">🛢️ الزيت المستخرج</span><div class="kpi-val" style="color:var(--blue);"><span id="mf-oil">0</span> لتر</div></div>
+                <div class="card"><span class="kpi-label">🏢 أمانات بالخزانات</span><div class="kpi-val" style="color:var(--green);"><span id="mf-stored">0</span> لتر</div></div>
+                <div class="card"><span class="kpi-label">💰 ديون عصر معلقة</span><div class="kpi-val" style="color:var(--red);"><span id="mf-debt">0.000</span> د.ت</div></div>
+            </div>
+            <div id="m-farmer-results-list"></div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="switchMobileTab('view-kpis', this)"><span style="font-size:17px;">📊</span><span>المؤشرات</span></button>
+        <button class="nav-btn" onclick="switchMobileTab('view-tanks', this)"><span style="font-size:17px;">🛢️</span><span>الخزانات</span></button>
+        <button class="nav-btn" onclick="switchMobileTab('view-pressing', this)"><span style="font-size:17px;">⚙️</span><span>العصر</span></button>
+        <button class="nav-btn" onclick="switchMobileTab('view-charts', this)"><span style="font-size:17px;">📈</span><span>الرسوم</span></button>
+          <button class="nav-btn" onclick="switchMobileTab('view-finance', this)"><span style="font-size:17px;">💸</span><span>المالية</span></button>
+        <button class="nav-btn" onclick="switchMobileTab('view-farmer', this)"><span style="font-size:17px;">🔎</span><span>فلاح</span></button>
+    </nav>
+
+    <script>
+        const DEFAULT_DB_URL = "https://albaraka-pro-98542-default-rtdb.europe-west1.firebasedatabase.app/:albaraka_data.json";
+        let savedCfg = JSON.parse(localStorage.getItem('albaraka_mob_cfg') || 'null');
+        let latestCloudData = null;
+
+        function resetMobileConfig() {
+            localStorage.removeItem('albaraka_mob_cfg');
+            document.getElementById('mobile-lock').style.display = 'flex';
+            document.getElementById('mob-err').textContent = '';
+        }
+
+        function switchMobileTab(viewId, btn) {
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function normalizeFirebaseUrl(rawUrl) {
+            let u = (rawUrl || '').trim();
+            if (!u) return DEFAULT_DB_URL;
+            if (!u.endsWith('.json')) {
+                u = u.replace(/\/+$/, '') + '/albaraka_data.json';
+            }
+            return u;
+        }
+
+        function connectMobileApp() {
+            const url = normalizeFirebaseUrl(document.getElementById('mob-url-input').value);
+            const pin = document.getElementById('mob-pin-input').value.trim();
+            document.getElementById('mob-url-input').value = url;
+
+            if (!pin) {
+                document.getElementById('mob-err').textContent = '⚠️ يرجى إدخال الرمز السري (PIN)';
+                return;
+            }
+            document.getElementById('mob-err').style.color = '#38bdf8';
+            document.getElementById('mob-err').textContent = '⏳ جاري الاتصال بالسحابة وجلب البيانات...';
+
+            savedCfg = { url, pin };
+            localStorage.setItem('albaraka_mob_cfg', JSON.stringify(savedCfg));
+            fetchLiveCloudData();
+        }
+
+        function fetchLiveCloudData() {
+            if (!savedCfg || !savedCfg.url) return;
+            const errEl = document.getElementById('mob-err');
+
+            fetch(savedCfg.url + '?t=' + Date.now())
+                .then(async res => {
+                    if (!res.ok) {
+                        throw new Error('HTTP_' + res.status);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (!data || !data.kpis) {
+                        errEl.style.color = '#f59e0b';
+                        errEl.textContent = '⚠️ السحابة فارغة حالياً! افتح برنامج الحاسوب واضغط على زر (مزامنة الهاتف الآن).';
+                        return;
+                    }
+
+                    const serverPin = String(data.pinPlain || data.pin || '1234');
+                    if (savedCfg.pin !== serverPin) {
+                        errEl.style.color = '#f43f5e';
+                        errEl.textContent = '❌ الرمز السري (PIN) غير صحيح!';
+                        document.getElementById('mobile-lock').style.display = 'flex';
+                        return;
+                    }
+
+                    latestCloudData = data;
+                    errEl.textContent = '';
+                    document.getElementById('mobile-lock').style.display = 'none';
+                    document.getElementById('m-mill-name').textContent = '🌳 ' + (data.millName || 'البركة Pro');
+                    document.getElementById('m-last-sync').textContent = 'آخر تحديث: ' + (data.lastSync || 'الآن');
+
+                    document.getElementById('m-cash').textContent = data.kpis.cashBox || data.kpis.cash || '0.000';
+                    document.getElementById('m-in').textContent = data.kpis.dayIn || '0.000';
+                    document.getElementById('m-out').textContent = data.kpis.dayOut || '0.000';
+                    document.getElementById('m-olives').textContent = data.kpis.olivesPressed || '0.00';
+                    document.getElementById('m-oil').textContent = data.kpis.oilProduced || '0.00';
+                    document.getElementById('m-tithe').textContent = data.kpis.titheOil || '0.00';
+                    document.getElementById('m-stock').textContent = data.kpis.netStock || '0.00';
+
+                    const tanksEl = document.getElementById('m-tanks-list');
+                    tanksEl.innerHTML = '';
+                    (data.tanks || []).forEach(t => {
+                        const pct = Math.min(100, (t.stored / (t.capacity || 1)) * 100);
+                        tanksEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;"><span>🛢️ ${t.name}</span><span style="color:var(--blue);">${pct.toFixed(1)}%</span></div><div style="font-size:11px;color:var(--text-desc);margin-top:4px;">${Number(t.stored).toFixed(1)} / ${t.capacity} لتر (${t.usage})</div><div class="progress-bg"><div class="progress-fill" style="width:${pct}%;background:${pct >= 90 ? 'var(--red)' : 'var(--green)'};"></div></div></div>`;
+                    });
+
+                    const pressEl = document.getElementById('m-pressing-list');
+                    pressEl.innerHTML = '';
+                    (data.recentPressing || []).slice(0, 40).forEach(p => {
+                        pressEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span>👤 ${p.name}</span><span style="color:var(--blue);">${p.date}</span></div><div style="font-size:12px;color:var(--text-desc);">زيتون: <strong>${Number(p.oliveW).toFixed(0)} كغ</strong> | زيت: <strong style="color:var(--green);">${Number(p.oilLiters).toFixed(1)} لتر</strong> | قلبة: <strong>${Number(p.kalba).toFixed(2)}</strong></div></div>`;
+                    });
+
+                    const buyEl = document.getElementById('m-buying-list');
+                    buyEl.innerHTML = '';
+                    (data.buyingContracts || []).slice(0, 30).forEach(b => {
+                        buyEl.innerHTML += `<div class="list-item"><strong>👤 ${b.name}</strong> (${b.date})<br><span style="font-size:12px;color:var(--text-desc);">الكمية: ${b.qty} ${b.system} | الإجمالي: ${Number(b.total).toFixed(3)} د.ت | <span style="color:var(--red);">المتبقي: ${Number(b.remaining).toFixed(3)}</span></span></div>`;
+                    });
+
+                    const expEl = document.getElementById('m-expenses-list');
+                    expEl.innerHTML = '';
+                    (data.expensesList || []).forEach(e => {
+                        expEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;"><span>${e.details}</span><strong style="color:${e.financialImpact >= 0 ? 'var(--green)' : 'var(--red)'};">${Number(e.financialImpact).toFixed(3)} د.ت</strong></div><span style="font-size:10px;color:var(--text-desc);">${e.date}</span></div>`;
+                    });
+
+                    const cData = data.dailyChartData || [];
+                    const kChart = document.getElementById('m-chart-kalba');
+                    const pChart = document.getElementById('m-chart-prod');
+                    if (cData.length > 0 && kChart && pChart) {
+                        const maxK = Math.max(...cData.map(x => x.kalba), 1);
+                        const maxO = Math.max(...cData.map(x => x.olives), 1);
+                        kChart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:6px;height:100%;padding-top:15px;">` + cData.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><span style="font-size:9px;color:var(--green);margin-bottom:3px;">${d.kalba}</span><div style="width:100%;height:${(d.kalba/maxK)*95}px;background:var(--green);border-radius:4px 4px 0 0;"></div><span style="font-size:9px;color:var(--text-desc);margin-top:4px;">${d.date}</span></div>`).join('') + `</div>`;
+                        pChart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:6px;height:100%;padding-top:15px;">` + cData.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><span style="font-size:9px;color:var(--blue);margin-bottom:3px;">${Math.round(d.oil)}L</span><div style="width:100%;height:${(d.olives/maxO)*95}px;background:var(--blue);border-radius:4px 4px 0 0;"></div><span style="font-size:9px;color:var(--text-desc);margin-top:4px;">${d.date}</span></div>`).join('') + `</div>`;
+                    }
+                })
+                .catch(err => {
+                    errEl.style.color = '#f43f5e';
+                    if (String(err.message).includes('HTTP_401') || String(err.message).includes('HTTP_403')) {
+                        errEl.textContent = '❌ رفض Firebase الاتصال (Permission Denied): يرجى تفعيل .read و .write في قواعد Firebase Rules.';
+                    } else {
+                        errEl.textContent = '❌ تعذر الاتصال بالسحابة: تأكد من اتصال الهاتف بالإنترنت أو افتح الملف عبر رابط ويب وليس كملف محلي.';
+                    }
+                });
+        }
+
+     function searchFarmerOnMobile() {
+            const q = (document.getElementById('m-farmer-search-input')?.value || '').trim().toLowerCase();
+            const listEl = document.getElementById('m-farmer-results-list');
+            const sumEl = document.getElementById('m-farmer-summary');
+            if (!listEl || !latestCloudData) return;
+
+            listEl.innerHTML = '';
+            if (!q) { sumEl.style.display = 'none'; return; }
+
+            let totalOlive = 0, totalOil = 0, totalStored = 0, totalDebt = 0, itemsHtml = '';
+            (latestCloudData.recentPressing || []).forEach(p => {
+                if ((p.name || '').toLowerCase().includes(q)) {
+                    totalOlive += parseFloat(p.oliveW) || 0;
+                    totalOil += parseFloat(p.oilLiters) || 0;
+                    const cost = (p.payMethod !== 'العشر' && p.payMethod !== 'باز') ? (parseFloat(p.cost) || 0) : 0;
+                    if (!p.isPaid) totalDebt += cost;
+                    itemsHtml += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span style="color:var(--blue);">⚙️ عصر (${p.name})</span><span>${p.date}</span></div><div style="font-size:12px;color:var(--text-desc);">زيتون: ${Number(p.oliveW).toFixed(0)} كغ | زيت: ${Number(p.oilLiters).toFixed(1)} لتر | <strong style="color:${p.isPaid ? 'var(--green)' : 'var(--red)'};">${p.isPaid ? 'خالص' : cost.toFixed(3) + ' د.ت'}</strong></div></div>`;
+                }
+            });
+            (latestCloudData.buyingContracts || []).forEach(b => {
+                if ((b.name || '').toLowerCase().includes(q)) {
+                    itemsHtml += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span style="color:var(--orange);">🛒 عقد شراء (${b.name})</span><span>${b.date}</span></div><div style="font-size:12px;color:var(--text-desc);">الكمية: ${b.qty} ${b.system} | المتبقي له: <strong style="color:var(--red);">${Number(b.remaining).toFixed(3)} د.ت</strong></div></div>`;
+                }
+            });
+            (latestCloudData.storageList || []).forEach(s => {
+                if ((s.name || '').toLowerCase().includes(q)) {
+                    totalStored += parseFloat(s.qty) || 0;
+                    itemsHtml += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span style="color:var(--green);">🛢️ تخزين (${s.name})</span><span>${s.date}</span></div><div style="font-size:12px;color:var(--text-desc);">${Number(s.qty).toFixed(1)} لتر في ${s.tank}</div></div>`;
+                }
+            });
+
+            sumEl.style.display = 'grid';
+            document.getElementById('mf-olive').textContent = totalOlive.toFixed(0);
+            document.getElementById('mf-oil').textContent = totalOil.toFixed(1);
+            document.getElementById('mf-stored').textContent = totalStored.toFixed(1);
+            document.getElementById('mf-debt').textContent = totalDebt.toFixed(3);
+            listEl.innerHTML = itemsHtml || '<p style="text-align:center;color:var(--text-desc);font-size:13px;margin-top:15px;">لا توجد نتائج مطابقة.</p>';
+        }
+
+        if (savedCfg) {
+            document.getElementById('mob-url-input').value = savedCfg.url;
+            document.getElementById('mob-pin-input').value = savedCfg.pin;
+            fetchLiveCloudData();
+            setInterval(fetchLiveCloudData, 20000);
+        }
+    </script>
+</body>
+</html>
+
