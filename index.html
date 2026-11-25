@@ -147,8 +147,8 @@
         <button class="nav-btn" onclick="switchMobileTab('view-farmer', this)"><span style="font-size:17px;">🔎</span><span>فلاح</span></button>
     </nav>
 
+
     <script>
-        const DEFAULT_DB_URL = "https://albaraka-pro-98542-default-rtdb.europe-west1.firebasedatabase.app/:albaraka_data.json";
         let savedCfg = JSON.parse(localStorage.getItem('albaraka_mob_cfg') || 'null');
         let latestCloudData = null;
 
@@ -165,26 +165,33 @@
             btn.classList.add('active');
         }
 
-        function normalizeFirebaseUrl(rawUrl) {
+        function normalizeCloudUrl(rawUrl) {
             let u = (rawUrl || '').trim();
-            if (!u) return DEFAULT_DB_URL;
-            if (!u.endsWith('.json')) {
+            if (!u) return '';
+            if (u.includes('jsonblob.com')) {
+                if (!u.includes('/api/jsonBlob/')) {
+                    u = u.replace('://jsonblob.com', '://jsonblob.comapi/jsonBlob/');
+                }
+                return u;
+            }
+            if (u.includes('firebasedatabase.app') && !u.endsWith('.json')) {
                 u = u.replace(/\/+$/, '') + '/albaraka_data.json';
             }
             return u;
         }
 
         function connectMobileApp() {
-            const url = normalizeFirebaseUrl(document.getElementById('mob-url-input').value);
+            const url = normalizeCloudUrl(document.getElementById('mob-url-input').value);
             const pin = document.getElementById('mob-pin-input').value.trim();
             document.getElementById('mob-url-input').value = url;
 
-            if (!pin) {
-                document.getElementById('mob-err').textContent = '⚠️ يرجى إدخال الرمز السري (PIN)';
+            if (!url || !pin) {
+                document.getElementById('mob-err').style.color = '#f43f5e';
+                document.getElementById('mob-err').textContent = '⚠️ يرجى إدخال رابط السحابة والرمز السري';
                 return;
             }
             document.getElementById('mob-err').style.color = '#38bdf8';
-            document.getElementById('mob-err').textContent = '⏳ جاري الاتصال بالسحابة وجلب البيانات...';
+            document.getElementById('mob-err').textContent = '⏳ جاري الاتصال وجلب البيانات...';
 
             savedCfg = { url, pin };
             localStorage.setItem('albaraka_mob_cfg', JSON.stringify(savedCfg));
@@ -195,88 +202,94 @@
             if (!savedCfg || !savedCfg.url) return;
             const errEl = document.getElementById('mob-err');
 
-            fetch(savedCfg.url + '?t=' + Date.now())
-                .then(async res => {
-                    if (!res.ok) {
-                        throw new Error('HTTP_' + res.status);
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (!data || !data.kpis) {
-                        errEl.style.color = '#f59e0b';
-                        errEl.textContent = '⚠️ السحابة فارغة حالياً! افتح برنامج الحاسوب واضغط على زر (مزامنة الهاتف الآن).';
-                        return;
-                    }
+            const fetchUrl = savedCfg.url.includes('jsonblob.com')
+                ? savedCfg.url
+                : savedCfg.url + '?t=' + Date.now();
 
-                    const serverPin = String(data.pinPlain || data.pin || '1234');
-                    if (savedCfg.pin !== serverPin) {
-                        errEl.style.color = '#f43f5e';
-                        errEl.textContent = '❌ الرمز السري (PIN) غير صحيح!';
-                        document.getElementById('mobile-lock').style.display = 'flex';
-                        return;
-                    }
+            fetch(fetchUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-store'
+            })
+            .then(async res => {
+                if (!res.ok) throw new Error('HTTP_' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                if (!data || !data.kpis) {
+                    errEl.style.color = '#f59e0b';
+                    errEl.textContent = '⚠️ السحابة فارغة حالياً! اضغط (مزامنة الهاتف الآن) في الحاسوب.';
+                    return;
+                }
 
-                    latestCloudData = data;
-                    errEl.textContent = '';
-                    document.getElementById('mobile-lock').style.display = 'none';
-                    document.getElementById('m-mill-name').textContent = '🌳 ' + (data.millName || 'البركة Pro');
-                    document.getElementById('m-last-sync').textContent = 'آخر تحديث: ' + (data.lastSync || 'الآن');
-
-                    document.getElementById('m-cash').textContent = data.kpis.cashBox || data.kpis.cash || '0.000';
-                    document.getElementById('m-in').textContent = data.kpis.dayIn || '0.000';
-                    document.getElementById('m-out').textContent = data.kpis.dayOut || '0.000';
-                    document.getElementById('m-olives').textContent = data.kpis.olivesPressed || '0.00';
-                    document.getElementById('m-oil').textContent = data.kpis.oilProduced || '0.00';
-                    document.getElementById('m-tithe').textContent = data.kpis.titheOil || '0.00';
-                    document.getElementById('m-stock').textContent = data.kpis.netStock || '0.00';
-
-                    const tanksEl = document.getElementById('m-tanks-list');
-                    tanksEl.innerHTML = '';
-                    (data.tanks || []).forEach(t => {
-                        const pct = Math.min(100, (t.stored / (t.capacity || 1)) * 100);
-                        tanksEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;"><span>🛢️ ${t.name}</span><span style="color:var(--blue);">${pct.toFixed(1)}%</span></div><div style="font-size:11px;color:var(--text-desc);margin-top:4px;">${Number(t.stored).toFixed(1)} / ${t.capacity} لتر (${t.usage})</div><div class="progress-bg"><div class="progress-fill" style="width:${pct}%;background:${pct >= 90 ? 'var(--red)' : 'var(--green)'};"></div></div></div>`;
-                    });
-
-                    const pressEl = document.getElementById('m-pressing-list');
-                    pressEl.innerHTML = '';
-                    (data.recentPressing || []).slice(0, 40).forEach(p => {
-                        pressEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span>👤 ${p.name}</span><span style="color:var(--blue);">${p.date}</span></div><div style="font-size:12px;color:var(--text-desc);">زيتون: <strong>${Number(p.oliveW).toFixed(0)} كغ</strong> | زيت: <strong style="color:var(--green);">${Number(p.oilLiters).toFixed(1)} لتر</strong> | قلبة: <strong>${Number(p.kalba).toFixed(2)}</strong></div></div>`;
-                    });
-
-                    const buyEl = document.getElementById('m-buying-list');
-                    buyEl.innerHTML = '';
-                    (data.buyingContracts || []).slice(0, 30).forEach(b => {
-                        buyEl.innerHTML += `<div class="list-item"><strong>👤 ${b.name}</strong> (${b.date})<br><span style="font-size:12px;color:var(--text-desc);">الكمية: ${b.qty} ${b.system} | الإجمالي: ${Number(b.total).toFixed(3)} د.ت | <span style="color:var(--red);">المتبقي: ${Number(b.remaining).toFixed(3)}</span></span></div>`;
-                    });
-
-                    const expEl = document.getElementById('m-expenses-list');
-                    expEl.innerHTML = '';
-                    (data.expensesList || []).forEach(e => {
-                        expEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;"><span>${e.details}</span><strong style="color:${e.financialImpact >= 0 ? 'var(--green)' : 'var(--red)'};">${Number(e.financialImpact).toFixed(3)} د.ت</strong></div><span style="font-size:10px;color:var(--text-desc);">${e.date}</span></div>`;
-                    });
-
-                    const cData = data.dailyChartData || [];
-                    const kChart = document.getElementById('m-chart-kalba');
-                    const pChart = document.getElementById('m-chart-prod');
-                    if (cData.length > 0 && kChart && pChart) {
-                        const maxK = Math.max(...cData.map(x => x.kalba), 1);
-                        const maxO = Math.max(...cData.map(x => x.olives), 1);
-                        kChart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:6px;height:100%;padding-top:15px;">` + cData.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><span style="font-size:9px;color:var(--green);margin-bottom:3px;">${d.kalba}</span><div style="width:100%;height:${(d.kalba/maxK)*95}px;background:var(--green);border-radius:4px 4px 0 0;"></div><span style="font-size:9px;color:var(--text-desc);margin-top:4px;">${d.date}</span></div>`).join('') + `</div>`;
-                        pChart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:6px;height:100%;padding-top:15px;">` + cData.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><span style="font-size:9px;color:var(--blue);margin-bottom:3px;">${Math.round(d.oil)}L</span><div style="width:100%;height:${(d.olives/maxO)*95}px;background:var(--blue);border-radius:4px 4px 0 0;"></div><span style="font-size:9px;color:var(--text-desc);margin-top:4px;">${d.date}</span></div>`).join('') + `</div>`;
-                    }
-                })
-                .catch(err => {
+                const serverPin = String(data.pinPlain || data.pin || '1234');
+                if (savedCfg.pin !== serverPin) {
                     errEl.style.color = '#f43f5e';
-                    if (String(err.message).includes('HTTP_401') || String(err.message).includes('HTTP_403')) {
-                        errEl.textContent = '❌ رفض Firebase الاتصال (Permission Denied): يرجى تفعيل .read و .write في قواعد Firebase Rules.';
-                    } else {
-                        errEl.textContent = '❌ تعذر الاتصال بالسحابة: تأكد من اتصال الهاتف بالإنترنت أو افتح الملف عبر رابط ويب وليس كملف محلي.';
-                    }
+                    errEl.textContent = '❌ الرمز السري (PIN) غير صحيح!';
+                    document.getElementById('mobile-lock').style.display = 'flex';
+                    return;
+                }
+
+                latestCloudData = data;
+                errEl.textContent = '';
+                document.getElementById('mobile-lock').style.display = 'none';
+                document.getElementById('m-mill-name').textContent = '🌳 ' + (data.millName || 'البركة Pro');
+                document.getElementById('m-last-sync').textContent = 'آخر تحديث: ' + (data.lastSync || 'الآن');
+
+                document.getElementById('m-cash').textContent = data.kpis.cashBox || data.kpis.cash || '0.000';
+                document.getElementById('m-in').textContent = data.kpis.dayIn || '0.000';
+                document.getElementById('m-out').textContent = data.kpis.dayOut || '0.000';
+                document.getElementById('m-olives').textContent = data.kpis.olivesPressed || '0.00';
+                document.getElementById('m-oil').textContent = data.kpis.oilProduced || '0.00';
+                document.getElementById('m-tithe').textContent = data.kpis.titheOil || '0.00';
+                document.getElementById('m-stock').textContent = data.kpis.netStock || '0.00';
+
+                // 1. الخزانات
+                const tanksEl = document.getElementById('m-tanks-list');
+                tanksEl.innerHTML = '';
+                (data.tanks || []).forEach(t => {
+                    const pct = Math.min(100, (t.stored / (t.capacity || 1)) * 100);
+                    tanksEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;"><span>🛢️ ${t.name}</span><span style="color:var(--blue);">${pct.toFixed(1)}%</span></div><div style="font-size:11px;color:var(--text-desc);margin-top:4px;">${Number(t.stored).toFixed(1)} / ${t.capacity} لتر (${t.usage})</div><div class="progress-bg"><div class="progress-fill" style="width:${pct}%;background:${pct >= 90 ? 'var(--red)' : 'var(--green)'};"></div></div></div>`;
                 });
+
+                // 2. العصر
+                const pressEl = document.getElementById('m-pressing-list');
+                pressEl.innerHTML = '';
+                (data.recentPressing || []).slice(0, 40).forEach(p => {
+                    pressEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span>👤 ${p.name}</span><span style="color:var(--blue);">${p.date}</span></div><div style="font-size:12px;color:var(--text-desc);">زيتون: <strong>${Number(p.oliveW).toFixed(0)} كغ</strong> | زيت: <strong style="color:var(--green);">${Number(p.oilLiters).toFixed(1)} لتر</strong> | قلبة: <strong>${Number(p.kalba).toFixed(2)}</strong></div></div>`;
+                });
+
+                // 3. عقود الشراء والمصاريف
+                const buyEl = document.getElementById('m-buying-list');
+                buyEl.innerHTML = '';
+                (data.buyingContracts || []).slice(0, 30).forEach(b => {
+                    buyEl.innerHTML += `<div class="list-item"><strong>👤 ${b.name}</strong> (${b.date})<br><span style="font-size:12px;color:var(--text-desc);">الكمية: ${b.qty} ${b.system} | الإجمالي: ${Number(b.total).toFixed(3)} د.ت | <span style="color:var(--red);">المتبقي: ${Number(b.remaining).toFixed(3)}</span></span></div>`;
+                });
+
+                const expEl = document.getElementById('m-expenses-list');
+                expEl.innerHTML = '';
+                (data.expensesList || []).forEach(e => {
+                    expEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;"><span>${e.details}</span><strong style="color:${e.financialImpact >= 0 ? 'var(--green)' : 'var(--red)'};">${Number(e.financialImpact).toFixed(3)} د.ت</strong></div><span style="font-size:10px;color:var(--text-desc);">${e.date}</span></div>`;
+                });
+
+                // 4. الرسوم البيانية
+                const cData = data.dailyChartData || [];
+                const kChart = document.getElementById('m-chart-kalba');
+                const pChart = document.getElementById('m-chart-prod');
+                if (cData.length > 0 && kChart && pChart) {
+                    const maxK = Math.max(...cData.map(x => x.kalba), 1);
+                    const maxO = Math.max(...cData.map(x => x.olives), 1);
+                    kChart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:6px;height:100%;padding-top:15px;">` + cData.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><span style="font-size:9px;color:var(--green);margin-bottom:3px;">${d.kalba}</span><div style="width:100%;height:${(d.kalba/maxK)*95}px;background:var(--green);border-radius:4px 4px 0 0;"></div><span style="font-size:9px;color:var(--text-desc);margin-top:4px;">${d.date}</span></div>`).join('') + `</div>`;
+                    pChart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:6px;height:100%;padding-top:15px;">` + cData.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><span style="font-size:9px;color:var(--blue);margin-bottom:3px;">${Math.round(d.oil)}L</span><div style="width:100%;height:${(d.olives/maxO)*95}px;background:var(--blue);border-radius:4px 4px 0 0;"></div><span style="font-size:9px;color:var(--text-desc);margin-top:4px;">${d.date}</span></div>`).join('') + `</div>`;
+                }
+            })
+            .catch(() => {
+                errEl.style.color = '#f43f5e';
+                errEl.textContent = '❌ تعذر الاتصال بالسحابة: تأكد من صحة الرابط واتصال الإنترنت.';
+            });
         }
 
-     function searchFarmerOnMobile() {
+        function searchFarmerOnMobile() {
             const q = (document.getElementById('m-farmer-search-input')?.value || '').trim().toLowerCase();
             const listEl = document.getElementById('m-farmer-results-list');
             const sumEl = document.getElementById('m-farmer-summary');
@@ -291,7 +304,8 @@
                     totalOlive += parseFloat(p.oliveW) || 0;
                     totalOil += parseFloat(p.oilLiters) || 0;
                     const cost = (p.payMethod !== 'العشر' && p.payMethod !== 'باز') ? (parseFloat(p.cost) || 0) : 0;
-                    if (!p.isPaid) totalDebt += cost;
+
+                                        if (!p.isPaid) totalDebt += cost;
                     itemsHtml += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span style="color:var(--blue);">⚙️ عصر (${p.name})</span><span>${p.date}</span></div><div style="font-size:12px;color:var(--text-desc);">زيتون: ${Number(p.oliveW).toFixed(0)} كغ | زيت: ${Number(p.oilLiters).toFixed(1)} لتر | <strong style="color:${p.isPaid ? 'var(--green)' : 'var(--red)'};">${p.isPaid ? 'خالص' : cost.toFixed(3) + ' د.ت'}</strong></div></div>`;
                 }
             });
@@ -325,3 +339,5 @@
 </body>
 </html>
 
+
+                    
