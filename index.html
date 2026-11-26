@@ -95,33 +95,77 @@
             </div>
         </div>
 
-        <div id="view-tanks" class="tab-view">
+                <div id="view-tanks" class="tab-view">
             <h4 style="margin-bottom:12px;color:var(--orange);">🛢️ مراقبة امتلاء الخزانات</h4>
-            <div id="m-tanks-list"></div>
+            <div id="m-tanks-list" style="margin-bottom:18px;"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                <h4 style="color:var(--green);margin:0;">👥 أمانات الفلاحين بالخزانات</h4>
+                <span style="font-size:12px;color:var(--text-desc);">الإجمالي: <strong id="m-storage-total-qty" style="color:var(--green);">0.0</strong> لتر</span>
+            </div>
+            <input type="text" id="m-storage-search-input" oninput="renderMobileStorageList()" placeholder="🔎 ابحث باسم الفلاح في الخزانات..." style="margin-bottom:10px;padding:10px;font-size:13px;">
+            <div id="m-storage-farmers-list"></div>
         </div>
 
-        <div id="view-pressing" class="tab-view">
-            <h4 style="margin-bottom:12px;color:var(--blue);">⚙️ آخر عمليات العصر</h4>
+
+                <div id="view-pressing" class="tab-view">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                <h4 style="color:var(--blue);margin:0;">⚙️ عمليات العصر</h4>
+                <select id="m-press-date-filter" onchange="renderMobilePressingList()" style="background:#1a2247;color:#fff;border:1px solid var(--blue);border-radius:8px;padding:6px 10px;font-size:12px;outline:none;">
+                    <option value="all">🌐 الكل (جميع التواريخ)</option>
+                </select>
+            </div>
+            <div id="m-pressing-summary" class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:10px 14px;border-right:3px solid var(--green);font-size:12px;">
+                <span>العمليات: <strong id="mp-count" style="color:var(--blue);">0</strong></span>
+                <span>زيتون: <strong id="mp-olives">0</strong> كغ</span>
+                <span>زيت: <strong id="mp-oil" style="color:var(--green);">0</strong> لتر</span>
+            </div>
             <div id="m-pressing-list"></div>
-        </div>
+                </div>
 
-        <div id="view-charts" class="tab-view">
+
+         <div id="view-charts" class="tab-view">
+            <div id="m-chart-tooltip" style="background:rgba(56,189,248,0.12);border:1px solid var(--blue);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12px;text-align:center;color:var(--blue);min-height:36px;display:flex;align-items:center;justify-content:center;">
+                👆 اضغط على أي نقطة في الرسم لعرض تفاصيل اليوم
+            </div>
+
             <div class="card" style="margin-bottom:14px;">
-                <h4 style="color:var(--green);margin-bottom:10px;font-size:13px;">📉 تطور معدل القلبة (آخر 10 أيام)</h4>
-                <div id="m-chart-kalba" style="height:150px;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <h4 style="color:var(--green);margin:0;font-size:13px;">📉 تطور معدل القلبة اليومي</h4>
+                    <span style="font-size:10px;color:var(--green);">● معدل القلبة</span>
+                </div>
+                <div id="m-chart-kalba" style="height:210px;width:100%;"></div>
             </div>
+
             <div class="card">
-                <h4 style="color:var(--blue);margin-bottom:10px;font-size:13px;">🛢️ الإنتاج اليومي (زيتون مقابل زيت)</h4>
-                <div id="m-chart-prod" style="height:150px;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+                    <h4 style="color:var(--blue);margin:0;font-size:13px;">🛢️ الإنتاج اليومي</h4>
+                    <div style="font-size:10px;display:flex;gap:10px;">
+                        <span style="color:#38bdf8;">● زيتون (كغ)</span>
+                        <span style="color:#f59e0b;">● زيت (لتر)</span>
+                    </div>
+                </div>
+                <div id="m-chart-prod" style="height:210px;width:100%;"></div>
             </div>
         </div>
 
+
+                
         <div id="view-finance" class="tab-view">
-            <h4 style="color:var(--orange);margin-bottom:10px;">🛒 آخر عقود شراء الزيت</h4>
-            <div id="m-buying-list" style="margin-bottom:18px;"></div>
-            <h4 style="color:var(--red);margin-bottom:10px;">💸 سجل المصاريف والإيداعات</h4>
-            <div id="m-expenses-list"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                <h4 style="color:var(--orange);margin:0;">🛒 عقود شراء الزيت</h4>
+                <select id="m-buy-date-filter" onchange="renderMobileBuyingList()" style="background:#1a2247;color:#fff;border:1px solid var(--orange);border-radius:8px;padding:6px 10px;font-size:12px;outline:none;">
+                    <option value="all">🌐 الكل (جميع التواريخ)</option>
+                </select>
+            </div>
+            <div id="m-buying-summary" class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:10px 14px;border-right:3px solid var(--orange);font-size:11px;">
+                <span>العقود: <strong id="mb-count" style="color:var(--orange);">0</strong></span>
+                <span>الإجمالي: <strong id="mb-total">0.000</strong> د.ت</span>
+                <span>المتبقي: <strong id="mb-rem" style="color:var(--red);">0.000</strong> د.ت</span>
+            </div>
+            <div id="m-buying-list"></div>
         </div>
+
 
         <div id="view-farmer" class="tab-view">
             <div class="card" style="margin-bottom:14px;">
@@ -143,7 +187,8 @@
         <button class="nav-btn" onclick="switchMobileTab('view-tanks', this)"><span style="font-size:17px;">🛢️</span><span>الخزانات</span></button>
         <button class="nav-btn" onclick="switchMobileTab('view-pressing', this)"><span style="font-size:17px;">⚙️</span><span>العصر</span></button>
         <button class="nav-btn" onclick="switchMobileTab('view-charts', this)"><span style="font-size:17px;">📈</span><span>الرسوم</span></button>
-          <button class="nav-btn" onclick="switchMobileTab('view-finance', this)"><span style="font-size:17px;">💸</span><span>المالية</span></button>
+        <button class="nav-btn" onclick="switchMobileTab('view-finance', this)"><span style="font-size:17px;">🛒</span><span>الشراء</span></button>
+
         <button class="nav-btn" onclick="switchMobileTab('view-farmer', this)"><span style="font-size:17px;">🔎</span><span>فلاح</span></button>
     </nav>
 
@@ -236,6 +281,7 @@
                 document.getElementById('m-mill-name').textContent = '🌳 ' + (data.millName || 'البركة Pro');
                 document.getElementById('m-last-sync').textContent = 'آخر تحديث: ' + (data.lastSync || 'الآن');
 
+                // 1. تحديث المؤشرات الرئيسية
                 document.getElementById('m-cash').textContent = data.kpis.cashBox || data.kpis.cash || '0.000';
                 document.getElementById('m-in').textContent = data.kpis.dayIn || '0.000';
                 document.getElementById('m-out').textContent = data.kpis.dayOut || '0.000';
@@ -244,50 +290,268 @@
                 document.getElementById('m-tithe').textContent = data.kpis.titheOil || '0.00';
                 document.getElementById('m-stock').textContent = data.kpis.netStock || '0.00';
 
-                // 1. الخزانات
+                // حساب معدل سعر شراء الزيت باللتر (مع تحويل الباز * 1.1)
+                let totalBuyLiters = 0, totalBuyCost = 0;
+                (data.buyingContracts || []).forEach(b => {
+                    const qty = parseFloat(b.qty) || 0;
+                    const total = parseFloat(b.total) || 0;
+                    const liters = (b.system === 'لتر') ? qty : (qty * 1.1);
+                    if (liters > 0 && total > 0) {
+                        totalBuyLiters += liters;
+                        totalBuyCost += total;
+                    }
+                });
+                const avgBuyPrice = totalBuyLiters > 0 ? (totalBuyCost / totalBuyLiters) : 0;
+                const avgBuyEl = document.getElementById('m-avg-buy-price');
+                if (avgBuyEl) avgBuyEl.textContent = avgBuyPrice.toFixed(3);
+
+                // 2. تحديث الخزانات وقائمة المودعين
                 const tanksEl = document.getElementById('m-tanks-list');
-                tanksEl.innerHTML = '';
-                (data.tanks || []).forEach(t => {
-                    const pct = Math.min(100, (t.stored / (t.capacity || 1)) * 100);
-                    tanksEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;"><span>🛢️ ${t.name}</span><span style="color:var(--blue);">${pct.toFixed(1)}%</span></div><div style="font-size:11px;color:var(--text-desc);margin-top:4px;">${Number(t.stored).toFixed(1)} / ${t.capacity} لتر (${t.usage})</div><div class="progress-bg"><div class="progress-fill" style="width:${pct}%;background:${pct >= 90 ? 'var(--red)' : 'var(--green)'};"></div></div></div>`;
-                });
+                if (tanksEl) {
+                    tanksEl.innerHTML = '';
+                    (data.tanks || []).forEach(t => {
+                        const pct = Math.min(100, (t.stored / (t.capacity || 1)) * 100);
+                        tanksEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;"><span>🛢️ ${t.name}</span><span style="color:var(--blue);">${pct.toFixed(1)}%</span></div><div style="font-size:11px;color:var(--text-desc);margin-top:4px;">${Number(t.stored).toFixed(1)} / ${t.capacity} لتر (${t.usage})</div><div class="progress-bg"><div class="progress-fill" style="width:${pct}%;background:${pct >= 90 ? 'var(--red)' : 'var(--green)'};"></div></div></div>`;
+                    });
+                }
+                if (typeof renderMobileStorageList === 'function') renderMobileStorageList();
 
-                // 2. العصر
-                const pressEl = document.getElementById('m-pressing-list');
-                pressEl.innerHTML = '';
-                (data.recentPressing || []).slice(0, 40).forEach(p => {
-                    pressEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span>👤 ${p.name}</span><span style="color:var(--blue);">${p.date}</span></div><div style="font-size:12px;color:var(--text-desc);">زيتون: <strong>${Number(p.oliveW).toFixed(0)} كغ</strong> | زيت: <strong style="color:var(--green);">${Number(p.oilLiters).toFixed(1)} لتر</strong> | قلبة: <strong>${Number(p.kalba).toFixed(2)}</strong></div></div>`;
-                });
+                // 3. تحديث قوائم العصر والشراء المفلترة بالتاريخ
+                if (typeof renderMobilePressingList === 'function') renderMobilePressingList();
+                if (typeof renderMobileBuyingList === 'function') renderMobileBuyingList();
 
-                // 3. عقود الشراء والمصاريف
-                const buyEl = document.getElementById('m-buying-list');
-                buyEl.innerHTML = '';
-                (data.buyingContracts || []).slice(0, 30).forEach(b => {
-                    buyEl.innerHTML += `<div class="list-item"><strong>👤 ${b.name}</strong> (${b.date})<br><span style="font-size:12px;color:var(--text-desc);">الكمية: ${b.qty} ${b.system} | الإجمالي: ${Number(b.total).toFixed(3)} د.ت | <span style="color:var(--red);">المتبقي: ${Number(b.remaining).toFixed(3)}</span></span></div>`;
-                });
-
-                const expEl = document.getElementById('m-expenses-list');
-                expEl.innerHTML = '';
-                (data.expensesList || []).forEach(e => {
-                    expEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;"><span>${e.details}</span><strong style="color:${e.financialImpact >= 0 ? 'var(--green)' : 'var(--red)'};">${Number(e.financialImpact).toFixed(3)} د.ت</strong></div><span style="font-size:10px;color:var(--text-desc);">${e.date}</span></div>`;
-                });
-
-                // 4. الرسوم البيانية
+                // 4. رسم المخططات الخطية SVG المطابقة للحاسوب
                 const cData = data.dailyChartData || [];
                 const kChart = document.getElementById('m-chart-kalba');
                 const pChart = document.getElementById('m-chart-prod');
+
+                function buildMobileSVGChart(labels, datasets, unit) {
+                    const width = 460, height = 210;
+                    const padL = 42, padR = 16, padT = 18, padB = 30;
+                    const plotW = width - padL - padR;
+                    const plotH = height - padT - padB;
+
+                    let allVals = [];
+                    datasets.forEach(ds => ds.values.forEach(v => allVals.push(v)));
+                    const maxVal = Math.max(...allVals, 1);
+
+                    let grid = '';
+                    for (let i = 0; i <= 4; i++) {
+                        const val = (maxVal / 4) * i;
+                        const y = padT + plotH - (i / 4) * plotH;
+                        grid += `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>`;
+                        grid += `<text x="${padL - 5}" y="${y + 4}" fill="#8fa0dd" font-size="10" text-anchor="end">${val >= 100 ? val.toFixed(0) : val.toFixed(1)}</text>`;
+                    }
+
+                    let xLabels = '';
+                    const count = labels.length;
+                    labels.forEach((lbl, idx) => {
+                        const x = count === 1 ? (padL + plotW / 2) : (padL + (idx / (count - 1)) * plotW);
+                        xLabels += `<text x="${x}" y="${height - 8}" fill="#8fa0dd" font-size="10" text-anchor="middle">${lbl}</text>`;
+                    });
+
+                    let lines = '';
+                    datasets.forEach(ds => {
+                        const pts = [];
+                        let dots = '';
+                        ds.values.forEach((val, idx) => {
+                            const x = count === 1 ? (padL + plotW / 2) : (padL + (idx / (count - 1)) * plotW);
+                            const y = padT + plotH - (val / (maxVal || 1)) * plotH;
+                            pts.push(`${x},${y}`);
+                            const infoText = `📅 ${labels[idx]} | ${ds.label}: ${Number(val).toFixed(2)} ${unit}`;
+                            dots += `<circle cx="${x}" cy="${y}" r="5.5" fill="${ds.color}" stroke="#0a0f24" stroke-width="2" onclick="document.getElementById('m-chart-tooltip').textContent='${infoText}'"></circle>`;
+                        });
+                        if (pts.length > 1) {
+                            lines += `<polyline fill="none" stroke="${ds.color}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" points="${pts.join(' ')}"/>`;
+                        }
+                        lines += dots;
+                    });
+
+                    return `<svg viewBox="0 0 ${width} ${height}" style="width:100%;height:100%;direction:ltr;">
+                        ${grid}
+                        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="rgba(255,255,255,0.3)"/>
+                        <line x1="${padL}" y1="${padT + plotH}" x2="${width - padR}" y2="${padT + plotH}" stroke="rgba(255,255,255,0.3)"/>
+                        ${xLabels}
+                        ${lines}
+                    </svg>`;
+                }
+
                 if (cData.length > 0 && kChart && pChart) {
-                    const maxK = Math.max(...cData.map(x => x.kalba), 1);
-                    const maxO = Math.max(...cData.map(x => x.olives), 1);
-                    kChart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:6px;height:100%;padding-top:15px;">` + cData.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><span style="font-size:9px;color:var(--green);margin-bottom:3px;">${d.kalba}</span><div style="width:100%;height:${(d.kalba/maxK)*95}px;background:var(--green);border-radius:4px 4px 0 0;"></div><span style="font-size:9px;color:var(--text-desc);margin-top:4px;">${d.date}</span></div>`).join('') + `</div>`;
-                    pChart.innerHTML = `<div style="display:flex;align-items:flex-end;gap:6px;height:100%;padding-top:15px;">` + cData.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><span style="font-size:9px;color:var(--blue);margin-bottom:3px;">${Math.round(d.oil)}L</span><div style="width:100%;height:${(d.olives/maxO)*95}px;background:var(--blue);border-radius:4px 4px 0 0;"></div><span style="font-size:9px;color:var(--text-desc);margin-top:4px;">${d.date}</span></div>`).join('') + `</div>`;
+                    const labels = cData.map(d => d.date);
+                    kChart.innerHTML = buildMobileSVGChart(labels, [
+                        { label: 'معدل القلبة', color: '#10b981', values: cData.map(d => Number(d.kalba) || 0) }
+                    ], 'قلبة');
+
+                    pChart.innerHTML = buildMobileSVGChart(labels, [
+                        { label: 'الزيتون المطحون', color: '#38bdf8', values: cData.map(d => Number(d.olives) || 0) },
+                        { label: 'الزيت المستخرج', color: '#f59e0b', values: cData.map(d => Number(d.oil) || 0) }
+                    ], '');
+                } else if (kChart && pChart) {
+                    const empty = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-desc);font-size:12px;">لا توجد بيانات عصر لعرض الرسم البياني</div>';
+                    kChart.innerHTML = empty;
+                    pChart.innerHTML = empty;
                 }
             })
-            .catch(() => {
+            .catch(err => {
                 errEl.style.color = '#f43f5e';
-                errEl.textContent = '❌ تعذر الاتصال بالسحابة: تأكد من صحة الرابط واتصال الإنترنت.';
+                if (String(err.message).includes('HTTP_401') || String(err.message).includes('HTTP_403')) {
+                    errEl.textContent = '❌ رفض الخادم الاتصال (Permission Denied): تأكد من تفعيل Règles في Firebase.';
+                } else {
+                    errEl.textContent = '❌ تعذر الاتصال بالسحابة: تأكد من صحة الرابط واتصال الهاتف بالإنترنت.';
+                }
             });
         }
+
+                    '
+        function renderMobilePressingList() {
+            const pressEl = document.getElementById('m-pressing-list');
+            const filterSel = document.getElementById('m-press-date-filter');
+            if (!pressEl || !latestCloudData) return;
+
+            const allRows = latestCloudData.recentPressing || [];
+
+            // تعبئة قائمة التواريخ المتاحة تلقائياً مع ال.  حفاظ على الاختيار الحالي
+            if (filterSel) {
+                const currentChoice = filterSel.value || 'all';
+                const uniqueDates = [...new Set(allRows.map(p => p.date).filter(Boolean))].sort().reverse();
+                const todayStr = new Date().toISOString().split('T')[0];
+
+                let optionsHtml = `<option value="all">🌐 الكل (${allRows.length})</option>`;
+                optionsHtml += `<option value="${todayStr}">📅 اليوم (${todayStr})</option>`;
+                uniqueDates.forEach(d => {
+                    if (d !== todayStr) {
+                        optionsHtml += `<option value="${d}">📆 ${d}</option>`;
+                    }
+                });
+                filterSel.innerHTML = optionsHtml;
+                filterSel.value = currentChoice;
+            }
+
+            const selectedDate = filterSel ? filterSel.value : 'all';
+            const filteredRows = (selectedDate === 'all')
+                ? allRows
+                : allRows.filter(p => String(p.date || '') === selectedDate);
+
+            // حساب مجاميع الفلتر المختار
+            let sumOlives = 0, sumOil = 0;
+            filteredRows.forEach(p => {
+                sumOlives += parseFloat(p.oliveW) || 0;
+                sumOil += parseFloat(p.oilLiters) || 0;
+            });
+
+            document.getElementById('mp-count').textContent = filteredRows.length;
+            document.getElementById('mp-olives').textContent = sumOlives.toFixed(0);
+            document.getElementById('mp-oil').textContent = sumOil.toFixed(1);
+
+            pressEl.innerHTML = '';
+            if (filteredRows.length === 0) {
+                pressEl.innerHTML = '<p style="text-align:center;color:var(--text-desc);font-size:13px;margin-top:15px;">لا توجد عمليات عصر مسجلة في هذا التاريخ.</p>';
+                return;
+            }
+
+            filteredRows.forEach(p => {
+                pressEl.innerHTML += `<div class="list-item"><div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;"><span>👤 ${p.name}</span><span style="color:var(--blue);">${p.date}</span></div><div style="font-size:12px;color:var(--text-desc);">زيتون: <strong>${Number(p.oliveW).toFixed(0)} كغ</strong> | زيت: <strong style="color:var(--green);">${Number(p.oilLiters).toFixed(1)} لتر</strong> | قلبة: <strong>${Number(p.kalba).toFixed(2)}</strong></div></div>`;
+            });
+        }
+
+                function renderMobileBuyingList() {
+            const buyEl = document.getElementById('m-buying-list');
+            const filterSel = document.getElementById('m-buy-date-filter');
+            if (!buyEl || !latestCloudData) return;
+
+            const allContracts = latestCloudData.buyingContracts || [];
+
+            if (filterSel) {
+                const currentChoice = filterSel.value || 'all';
+                const uniqueDates = [...new Set(allContracts.map(b => b.date).filter(Boolean))].sort().reverse();
+                const todayStr = new Date().toISOString().split('T')[0];
+
+                let optionsHtml = `<option value="all">🌐 الكل (${allContracts.length})</option>`;
+                optionsHtml += `<option value="${todayStr}">📅 اليوم (${todayStr})</option>`;
+                uniqueDates.forEach(d => {
+                    if (d !== todayStr) {
+                        optionsHtml += `<option value="${d}">📆 ${d}</option>`;
+                    }
+                });
+                filterSel.innerHTML = optionsHtml;
+                filterSel.value = currentChoice;
+            }
+
+            const selectedDate = filterSel ? filterSel.value : 'all';
+            const filteredContracts = (selectedDate === 'all')
+                ? allContracts
+                : allContracts.filter(b => String(b.date || '') === selectedDate);
+
+            let sumTotal = 0, sumRem = 0;
+            filteredContracts.forEach(b => {
+                sumTotal += parseFloat(b.total) || 0;
+                sumRem += parseFloat(b.remaining) || 0;
+            });
+
+            document.getElementById('mb-count').textContent = filteredContracts.length;
+            document.getElementById('mb-total').textContent = sumTotal.toFixed(3);
+            document.getElementById('mb-rem').textContent = sumRem.toFixed(3);
+
+            buyEl.innerHTML = '';
+            if (filteredContracts.length === 0) {
+                buyEl.innerHTML = '<p style="text-align:center;color:var(--text-desc);font-size:13px;margin-top:15px;">لا توجد عقود شراء مسجلة في هذا التاريخ.</p>';
+                return;
+            }
+
+            filteredContracts.forEach(b => {
+                const remVal = Number(b.remaining) || 0;
+                buyEl.innerHTML += `
+                    <div class="list-item">
+                        <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;">
+                            <span>👤 ${b.name}</span>
+                            <span style="color:var(--orange);">${b.date}</span>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-desc);">
+                            الكمية: <strong>${b.qty} ${b.system}</strong> | الإجمالي: <strong>${Number(b.total).toFixed(3)} د.ت</strong><br>
+                            المتبقي للفلاح: <strong style="color:${remVal > 0 ? 'var(--red)' : 'var(--green)'};">${remVal > 0 ? remVal.toFixed(3) + ' د.ت' : 'خالص بالكامل ✅'}</strong>
+                        </div>
+                    </div>`;
+            });
+        }
+
+
+        function renderMobileStorageList() {
+            const listEl = document.getElementById('m-storage-farmers-list');
+            const totalEl = document.getElementById('m-storage-total-qty');
+            if (!listEl || !latestCloudData) return;
+
+            const query = (document.getElementById('m-storage-search-input')?.value || '').trim().toLowerCase();
+            const allStorage = latestCloudData.storageList || [];
+
+            const filtered = allStorage.filter(s => !query || String(s.name || '').toLowerCase().includes(query));
+
+            let sumQty = 0;
+            filtered.forEach(s => sumQty += parseFloat(s.qty) || 0);
+            if (totalEl) totalEl.textContent = sumQty.toFixed(1);
+
+            listEl.innerHTML = '';
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<p style="text-align:center;color:var(--text-desc);font-size:13px;margin-top:10px;">لا توجد إيداعات مسجلة حالياً.</p>';
+                return;
+            }
+
+            filtered.forEach(s => {
+                listEl.innerHTML += `
+                    <div class="list-item">
+                        <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:4px;">
+                            <span>👤 ${s.name}</span>
+                            <span style="color:var(--green);">${Number(s.qty).toFixed(1)} لتر</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-desc);display:flex;justify-content:space-between;">
+                            <span>🛢️ ${s.tank}</span>
+                            <span>📅 ${s.date}</span>
+                        </div>
+                    </div>`;
+            });
+        }
+
+    
+        
 
         function searchFarmerOnMobile() {
             const q = (document.getElementById('m-farmer-search-input')?.value || '').trim().toLowerCase();
@@ -335,6 +599,8 @@
             fetchLiveCloudData();
             setInterval(fetchLiveCloudData, 20000);
         }
+
+        
     </script>
 </body>
 </html>
